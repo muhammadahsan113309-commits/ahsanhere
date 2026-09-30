@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AHSAN PROFILE HUB</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Firebase Compatibility SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #090d16 0%, #17153a 50%, #090d16 100%);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    body.light-theme {
+      --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+      --card-bg: rgba(255, 255, 255, 0.75);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; cursor: none !important; }
+
+    /* Interactive Cursor Spotlight Background */
+    #cursor-spotlight {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(99, 102, 241, 0.15), transparent 40%);
+      transition: opacity 0.3s ease;
+    }
+
+    /* Precision Center Dot */
+    #cursor-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 6px;
+      background: #ffffff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px #ffffff, 0 0 20px var(--accent);
+    }
+
+    /* Glowing Outer Aura Ring */
+    #cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(99, 102, 241, 0.8);
+      background: rgba(99, 102, 241, 0.05);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4), inset 0 0 15px rgba(236, 72, 153, 0.2);
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Dynamic Hover Ring State */
+    body.cursor-hover #cursor-ring {
+      width: 58px;
+      height: 58px;
+      border-color: #ec4899;
+      background: rgba(236, 72, 153, 0.12);
+      box-shadow: 0 0 25px rgba(236, 72, 153, 0.6), inset 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Particle Trail Sparks */
+    .trail-spark {
+      position: fixed;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      animation: fadeOutSpark 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes fadeOutSpark {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) translateY(12px); }
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+      transition: background 0.4s ease;
+    }
+
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: var(--accent);
+      filter: blur(150px);
+      border-radius: 50%;
+      opacity: 0.18;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body::before { top: 5%; left: 20%; }
+    body::after { bottom: 5%; right: 20%; background: #ec4899; }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: floatParticle 8s infinite linear;
+    }
+    @keyframes floatParticle {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      20% { opacity: 0.6; }
+      80% { opacity: 0.6; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+
+    .profile-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 30px 26px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(25px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .dynamic-island {
+      position: relative;
+      margin: 0 auto 16px auto;
+      width: 100%;
+      max-width: 230px;
+      min-height: 34px;
+      background: #000000;
+      border-radius: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      color: #fff;
+      box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+    }
+
+    .dynamic-island.expanded {
+      max-width: 330px;
+      min-height: 80px;
+      border-radius: 24px;
+      background: #08080c;
+      border-color: #ef4444;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+    }
+
+    .dynamic-island:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .island-content {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .island-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .island-avatar-dot {
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #10b981;
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0% { transform: scale(0.95); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+      100% { transform: scale(0.95); opacity: 1; }
+    }
+
+    .island-text {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #f1f5f9;
+      transition: opacity 0.25s ease;
+    }
+
+    .island-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+    }
+
+    .beat-visualizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+      margin-left: 4px;
+    }
+    .beat-bar {
+      width: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+      height: 4px;
+      transition: height 0.1s ease;
+    }
+    .dynamic-island.playing-beat .beat-bar {
+      animation: bounceBar 0.6s infinite alternate ease-in-out;
+    }
+    .beat-bar:nth-child(1) { animation-delay: 0.1s; }
+    .beat-bar:nth-child(2) { animation-delay: 0.3s; }
+    .beat-bar:nth-child(3) { animation-delay: 0.2s; }
+
+    @keyframes bounceBar {
+      0% { height: 3px; }
+      100% { height: 12px; background: #10b981; }
+    }
+
+    .island-expanded-view {
+      display: none;
+      width: 100%;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    .dynamic-island.expanded .island-expanded-view {
+      display: block;
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .theme-toggle, .visitor-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .logo-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px var(--accent-glow);
+      transition: transform 0.4s ease;
+    }
+    .logo:hover { transform: scale(1.06) rotate(3deg); }
+
+    .profile-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .bio-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .profile-bio {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .bio-copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      transition: color 0.2s;
+    }
+    .bio-copy-btn:hover { color: var(--accent); }
+
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .badge-pill {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .reactions-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .reaction-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 6px 10px;
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .reaction-btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+
+    .links-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .links-container::-webkit-scrollbar { width: 4px; }
+    .links-container::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+
+    .link-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 13px 18px;
+      border-radius: 14px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .link-card i { font-size: 1.1rem; color: var(--accent); transition: transform 0.3s ease; }
+    .link-card:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px var(--accent-glow);
+      color: #fff;
+    }
+    .link-card:hover i { transform: scale(1.2); color: #fff; }
+
+    .note-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed var(--card-border);
+      padding: 14px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .note-box textarea {
+      width: 100%;
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px;
+      color: #fff;
+      font-size: 0.85rem;
+      resize: none;
+      outline: none;
+      height: 55px;
+      margin-bottom: 8px;
+    }
+    .note-box textarea:focus { border-color: var(--accent); }
+    .note-btn {
+      width: 100%;
+      padding: 8px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.82rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .note-btn:hover { background: var(--accent); }
+
+    .actions-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .action-btn {
+      padding: 10px 4px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .action-btn i { font-size: 0.9rem; }
+    .action-btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+    .action-btn.active-vibe { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; }
+
+    .secret-btn {
+      background: rgba(236, 72, 153, 0.15) !important;
+      border-color: rgba(236, 72, 153, 0.4) !important;
+      color: #ec4899 !important;
+    }
+    .secret-btn:hover {
+      background: #ec4899 !important;
+      color: #fff !important;
+    }
+
+    .admin-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      transition: all 0.3s ease;
+    }
+    .admin-link:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.08); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 17, 0.85);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: #131b2e;
+      border: 1px solid var(--card-border);
+      padding: 36px 28px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    }
+    .modal h2 { font-size: 1.5rem; margin-bottom: 8px; color: #fff; }
+    .modal p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 24px; }
+    .modal input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(9, 13, 22, 0.8);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .modal button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor Visual Elements -->
+  <div id="cursor-spotlight"></div>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- Floating Ambient Particles -->
+  <div class="particle" style="top: 10%; left: 15%; animation-duration: 7s;"></div>
+  <div class="particle" style="top: 30%; left: 80%; animation-duration: 9s;"></div>
+  <div class="particle" style="top: 70%; left: 25%; animation-duration: 6s;"></div>
+  <div class="particle" style="top: 85%; left: 75%; animation-duration: 10s;"></div>
+
+  <div class="profile-card">
+    
+    <!-- Dynamic Island -->
+    <div class="dynamic-island playing-beat" id="dynamicIsland" onclick="toggleIslandExpansion()">
+      <div class="island-content">
+        <div class="island-left">
+          <div class="island-avatar-dot" id="islandDot"></div>
+          <span class="island-text" id="islandText">Loading...</span>
+        </div>
+        <div class="island-right" id="islandRight">
+          <div class="beat-visualizer">
+            <div class="beat-bar"></div>
+            <div class="beat-bar"></div>
+            <div class="beat-bar"></div>
+          </div>
+        </div>
+      </div>
+      <div class="island-expanded-view" id="islandExpandedView">
+        ✨ Click the island again to cycle hints or collapse.
+      </div>
+    </div>
+
+    <div class="top-controls">
+      <div class="visitor-badge" id="visitCounter">
+        <i class="fa-solid fa-eye"></i> Views: <span id="viewCountVal">--</span>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fa-solid fa-moon" id="themeIcon"></i> Theme
+      </button>
+    </div>
+
+    <div class="logo-wrapper">
+      <img id="profileLogo" class="logo" src="https://via.placeholder.com/110" alt="Profile Logo" onclick="handleLogoClick()" title="Click for a surprise!" />
+    </div>
+
+    <h1 class="profile-title" id="welcomeHeading">Connect With Me</h1>
+    
+    <div class="bio-wrapper">
+      <p class="profile-bio" id="profileBio">Official social links & channels hub</p>
+      <button class="bio-copy-btn" onclick="copyBioText()" title="Copy Bio"><i class="fa-regular fa-copy"></i></button>
+    </div>
+
+    <div class="badges-row" id="badgesRow">
+      <div class="badge-pill"><i class="fa-solid fa-bolt"></i> VIP Visitor</div>
+      <div class="badge-pill"><i class="fa-solid fa-music"></i> Audio Vibe ON</div>
+    </div>
+
+    <div class="reactions-bar">
+      <button class="reaction-btn" onclick="sendReaction('fire'); playUiSound();">🔥 <span id="count-fire">0</span></button>
+      <button class="reaction-btn" onclick="sendReaction('heart'); playUiSound();">❤️ <span id="count-heart">0</span></button>
+      <button class="reaction-btn" onclick="sendReaction('rocket'); playUiSound();">🚀 <span id="count-rocket">0</span></button>
+      <button class="reaction-btn" onclick="sendReaction('mindblown'); playUiSound();">🤯 <span id="count-mindblown">0</span></button>
+    </div>
+
+    <div id="linksList" class="links-container"></div>
+
+    <div class="note-box">
+      <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">
+        <i class="fa-solid fa-envelope-open-text"></i> Leave a Secret Note for Ahsan:
+      </div>
+      <textarea id="secretNoteInput" placeholder="Write something nice..." maxlength="150"></textarea>
+      <button class="note-btn" onclick="submitSecretNote(); playUiSound();">Send Note 🤫</button>
+    </div>
+
+    <!-- Action Buttons Row -->
+    <div class="actions-row">
+      <button class="action-btn active-vibe" id="vibeToggleBtn" onclick="toggleAudioVibe()">
+        <i class="fa-solid fa-volume-high" id="vibeIcon"></i> Vibe: On
+      </button>
+      <button class="action-btn secret-btn" onclick="openSecretPrompt(); playUiSound();">
+        <i class="fa-solid fa-lock"></i> Secret
+      </button>
+      <button class="action-btn" onclick="shareProfile(); playUiSound();">
+        <i class="fa-solid fa-share-nodes"></i> Share
+      </button>
+      <button class="action-btn" onclick="promptNameChange(); playUiSound();">
+        <i class="fa-solid fa-user-pen"></i> Edit
+      </button>
+    </div>
+
+    <a class="admin-link" href="adminpanel.html">
+      <i class="fa-solid fa-gear"></i> Admin Dashboard
+    </a>
+  </div>
+
+  <!-- Visitor Name Modal -->
+  <div id="nameModal" class="modal-overlay">
+    <div class="modal">
+      <h2>Welcome 👋</h2>
+      <p>Please enter your name to unlock profile details:</p>
+      <input type="text" id="visitorNameInput" placeholder="Your Name..." autocomplete="off" onkeydown="if(event.key === 'Enter') submitVisitorInfo()" />
+      <button onclick="submitVisitorInfo()">Continue to Hub</button>
+    </div>
+  </div>
+
+  <!-- Mobile Number Modal for Secret Area -->
+  <div id="secretPhoneModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>📱 Verification</h2>
+      <p>Enter your mobile phone number to proceed:</p>
+      <input type="text" id="secretPhoneInput" placeholder="03xx-xxxxxxx" autocomplete="off" onkeydown="if(event.key === 'Enter') submitSecretPhone()" />
+      <button onclick="submitSecretPhone()">Next Step</button>
+    </div>
+  </div>
+
+  <!-- Secret Password Modal -->
+  <div id="secretPasswordModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>🔐 Secret Password</h2>
+      <p>Enter secret access password:</p>
+      <input type="password" id="secretPasswordInput" placeholder="Password..." autocomplete="off" onkeydown="if(event.key === 'Enter') checkSecretPassword()" />
+      <button onclick="checkSecretPassword()">Unlock Secret</button>
+    </div>
+  </div>
+
+  <!-- Success Romantic Message Modal -->
+  <div id="secretSuccessModal" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 440px;">
+      <h2>💌 Special Message</h2>
+      <p id="secretSuccessTextMessage" style="font-size: 1rem; line-height: 1.6; color: #f1f5f9; margin-top: 10px;">
+        Hi! I want to tell you something... I love you. I am afraid to tell you, but if you are reading this, leave a note on the main page that you are here. Love you.... ❤️
+      </p>
+      <button onclick="closeSecretSuccess()">Close & Leave Note</button>
+    </div>
+  </div>
+
+  <!-- Integrated Logic Script -->
+  <script>
+    // Smooth Spring-Physics Cursor, Spotlight & Spark Trail
+    const dot = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    const spotlight = document.getElementById('cursor-spotlight');
+
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let ringX = mouseX;
+    let ringY = mouseY;
+    let lastSparkTime = 0;
+
+    const sparkColors = ['#6366f1', '#ec4899', '#3b82f6', '#10b981', '#f59e0b'];
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+
+      dot.style.left = mouseX + 'px';
+      dot.style.top = mouseY + 'px';
+
+      spotlight.style.setProperty('--mouse-x', mouseX + 'px');
+      spotlight.style.setProperty('--mouse-y', mouseY + 'px');
+
+      // Spawn glowing trail sparks
+      const now = Date.now();
+      if (now - lastSparkTime > 35) {
+        createSpark(mouseX, mouseY);
+        lastSparkTime = now;
+      }
+    });
+
+    function createSpark(x, y) {
+      const spark = document.createElement('div');
+      spark.className = 'trail-spark';
+      spark.style.left = x + 'px';
+      spark.style.top = y + 'px';
+      const color = sparkColors[Math.floor(Math.random() * sparkColors.length)];
+      spark.style.background = color;
+      spark.style.boxShadow = `0 0 8px ${color}`;
+      document.body.appendChild(spark);
+      setTimeout(() => spark.remove(), 600);
+    }
+
+    // Animation Loop for Smooth Follower Ring
+    function animateCursor() {
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+
+      ring.style.left = ringX + 'px';
+      ring.style.top = ringY + 'px';
+
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Hover state detector for buttons/links
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest('a, button, input, textarea, .dynamic-island, .logo')) {
+        document.body.classList.add('cursor-hover');
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest('a, button, input, textarea, .dynamic-island, .logo')) {
+        document.body.classList.remove('cursor-hover');
+      }
+    });
+
+    document.addEventListener('mousedown', () => {
+      ring.style.transform = 'translate(-50%, -50%) scale(0.75)';
+    });
+
+    document.addEventListener('mouseup', () => {
+      ring.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyACVwVXRB_5nTFozs0PV22zd6wSpZuBVqE",
+      authDomain: "reakweb.firebaseapp.com",
+      databaseURL: "https://reakweb-default-rtdb.firebaseio.com",
+      projectId: "reakweb",
+      storageBucket: "reakweb.firebasestorage.app",
+      messagingSenderId: "228639861953",
+      appId: "1:228639861953:web:2941663bb550703b61b840"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    window.visitorIpData = { ip: "Unavailable", country: "Unknown", region: "Unknown" };
+
+    async function fetchGlobalIpInfo() {
+      try {
+        const res = await fetch("https://ipwho.is/");
+        const data = await res.json();
+        if (data && data.success) {
+          window.visitorIpData.ip = data.ip;
+          window.visitorIpData.country = data.country;
+          window.visitorIpData.region = data.region;
+        }
+      } catch (e) {}
+    }
+    fetchGlobalIpInfo();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedName = localStorage.getItem('visitorName');
+      if (savedName) {
+        const modal = document.getElementById('nameModal');
+        if (modal) modal.classList.add('hidden');
+        updateGreeting(savedName);
+      }
+
+      if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-theme');
+        const themeIcon = document.getElementById('themeIcon');
+        if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+      }
+
+      loadProfileData();
+    });
+
+    function toggleTheme() {
+      document.body.classList.toggle('light-theme');
+      const isLight = document.body.classList.contains('light-theme');
+      const themeIcon = document.getElementById('themeIcon');
+      if (themeIcon) themeIcon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+
+    function updateGreeting(name) {
+      const heading = document.getElementById('welcomeHeading');
+      if (heading) {
+        heading.innerText = `Welcome, ${name}! 👋`;
+      }
+    }
+
+    async function submitVisitorInfo() {
+      const inputVal = document.getElementById('visitorNameInput').value.trim();
+      if (!inputVal) {
+        alert("Please enter your name to continue.");
+        return;
+      }
+
+      localStorage.setItem('visitorName', inputVal);
+      const modal = document.getElementById('nameModal');
+      if (modal) modal.classList.add('hidden');
+      updateGreeting(inputVal);
+
+      if (window.visitorIpData.ip === "Unavailable") {
+        await fetchGlobalIpInfo();
+      }
+
+      try {
+        await db.collection('visitor_logs').add({
+          visitorName: inputVal,
+          ip: window.visitorIpData.ip,
+          country: window.visitorIpData.country,
+          region: window.visitorIpData.region,
+          userAgent: navigator.userAgent,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          time: new Date().toLocaleString()
+        });
+      } catch (err) {}
+    }
+
+    async function submitSecretNote() {
+      const noteInput = document.getElementById('secretNoteInput');
+      const noteText = noteInput ? noteInput.value.trim() : "";
+      const visitorName = localStorage.getItem('visitorName') || "Stranger";
+
+      if (!noteText) {
+        alert("Please write a message first!");
+        return;
+      }
+
+      if (window.visitorIpData.ip === "Unavailable") {
+        await fetchGlobalIpInfo();
+      }
+
+      try {
+        await db.collection('visitor_notes').add({
+          sender: visitorName,
+          note: noteText,
+          ip: window.visitorIpData.ip,
+          country: window.visitorIpData.country,
+          region: window.visitorIpData.region,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          time: new Date().toLocaleString()
+        });
+        
+        if (noteInput) noteInput.value = '';
+        if (typeof showTemporaryIslandAlert === 'function') {
+          showTemporaryIslandAlert("Secret note sent to Ahsan! 🤫", "fa-solid fa-envelope-circle-check", "#10b981");
+        } else {
+          alert("Secret note sent successfully to Ahsan! 🤫");
+        }
+        sessionStorage.setItem('hasLeftNote', 'true');
+      } catch (e) {
+        alert("Failed to send note. Please check your connection.");
+      }
+    }
+
+    function promptNameChange() {
+      const current = localStorage.getItem('visitorName') || "";
+      const nameInput = document.getElementById('visitorNameInput');
+      const nameModal = document.getElementById('nameModal');
+      if (nameInput && nameModal) {
+        nameInput.value = current;
+        nameModal.classList.remove('hidden');
+      } else {
+        const newName = prompt("Update your name:", current);
+        if (newName && newName.trim() !== "") {
+          localStorage.setItem('visitorName', newName.trim());
+          updateGreeting(newName.trim());
+        }
+      }
+    }
+
+    function shareProfile() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Ahsan Profile Hub',
+          text: 'Check out my official profile hub!',
+          url: window.location.href,
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        if (typeof showTemporaryIslandAlert === 'function') {
+          showTemporaryIslandAlert("Profile link copied! 📋", "fa-solid fa-copy", "#3b82f6");
+        } else {
+          alert("Profile link copied to clipboard!");
+        }
+      }
+    }
+
+    function loadProfileData() {
+      db.collection('clash_voting').doc('event_data').onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          
+          const logoEl = document.getElementById('profileLogo');
+          if (logoEl && data.logo) logoEl.src = data.logo;
+
+          const bioEl = document.getElementById('profileBio');
+          if (bioEl && data.bio) bioEl.innerText = data.bio;
+
+          if (data.views) {
+            const viewSpan = document.getElementById('viewCountVal');
+            if (viewSpan) viewSpan.innerText = data.views;
+          }
+        }
+      });
+    }
+
+    let audioCtx = null;
+    let isVibeActive = true; 
+
+    function playUiSound(freq = 520, type = 'sine', duration = 0.08) {
+      if (!isVibeActive) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleAudioVibe() {
+      isVibeActive = !isVibeActive;
+      const btn = document.getElementById('vibeToggleBtn');
+      const icon = document.getElementById('vibeIcon');
+      const island = document.getElementById('dynamicIsland');
+      
+      if (isVibeActive) {
+        btn.classList.add('active-vibe');
+        icon.className = 'fa-solid fa-volume-high';
+        btn.innerHTML = `<i class="fa-solid fa-volume-high" id="vibeIcon"></i> Vibe: On`;
+        island.classList.add('playing-beat');
+        playUiSound(650, 'triangle', 0.2);
+        showTemporaryIslandAlert("Audio Vibe Activated ✨", "fa-solid fa-music", "#10b981");
+      } else {
+        btn.classList.remove('active-vibe');
+        icon.className = 'fa-solid fa-volume-xmark';
+        btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="vibeIcon"></i> Vibe: Off`;
+        island.classList.remove('playing-beat');
+        showTemporaryIslandAlert("Audio Vibe Muted 🔇", "fa-solid fa-volume-xmark", "#94a3b8");
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedName = localStorage.getItem('visitorName');
+      if (savedName) {
+        document.getElementById('nameModal').classList.add('hidden');
+        updateGreeting(savedName);
+      }
+      loadLiveData();
+      incrementViewCounter();
+      loadReactions();
+      startIslandTicker();
+
+      window.addEventListener('pointerdown', () => {
+        playUiSound(540, 'sine', 0.12);
+      }, { once: true });
+    });
+
+    let islandIndex = 0;
+    let islandTimer = null;
+    let isIslandExpanded = false;
+
+    function getIslandMessages() {
+      const name = localStorage.getItem('visitorName') || "Visitor";
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      let messages = [
+        { text: `Hi ${name}! Welcome 👋`, icon: "fa-solid fa-face-smile", color: "#6366f1" },
+        { text: `Current time: ${timeStr}`, icon: "fa-solid fa-clock", color: "#3b82f6" },
+        { text: `Thanks for your reaction! 🔥`, icon: "fa-solid fa-heart", color: "#ec4899" },
+        { text: `Share this hub with friends! 🚀`, icon: "fa-solid fa-share-nodes", color: "#f59e0b" },
+        { text: `Explore Ahsan's links below 👇`, icon: "fa-solid fa-compass", color: "#8b5cf6" }
+      ];
+
+      if (sessionStorage.getItem('hasLeftNote') === 'true') {
+        messages.splice(2, 0, { text: `Thanks for leaving a note! 📝`, icon: "fa-solid fa-envelope", color: "#10b981" });
+      }
+
+      return messages;
+    }
+
+    function updateIslandDisplay(msgObj) {
+      const textEl = document.getElementById('islandText');
+      textEl.style.opacity = 0;
+      setTimeout(() => {
+        textEl.innerText = msgObj.text;
+        textEl.style.opacity = 1;
+      }, 150);
+    }
+
+    function startIslandTicker() {
+      const messages = getIslandMessages();
+      if (islandIndex >= messages.length) islandIndex = 0;
+      updateIslandDisplay(messages[islandIndex]);
+      
+      if (islandTimer) clearInterval(islandTimer);
+      islandTimer = setInterval(() => {
+        if (!isIslandExpanded) {
+          const msgs = getIslandMessages();
+          islandIndex = (islandIndex + 1) % msgs.length;
+          updateIslandDisplay(msgs[islandIndex]);
+        }
+      }, 4500);
+    }
+
+    function toggleIslandExpansion() {
+      playUiSound(440, 'sine', 0.05);
+      const island = document.getElementById('dynamicIsland');
+      isIslandExpanded = !isIslandExpanded;
+      
+      if (isIslandExpanded) {
+        island.classList.add('expanded');
+        const msgs = getIslandMessages();
+        islandIndex = (islandIndex + 1) % msgs.length;
+        updateIslandDisplay(msgs[islandIndex]);
+      } else {
+        island.classList.remove('expanded');
+      }
+    }
+
+    function showTemporaryIslandAlert(text, icon = "fa-solid fa-bell", color = "#6366f1") {
+      if (islandTimer) clearInterval(islandTimer);
+      isIslandExpanded = false;
+      document.getElementById('dynamicIsland').classList.remove('expanded');
+      
+      updateIslandDisplay({ text, icon, color });
+      setTimeout(() => {
+        startIslandTicker();
+      }, 4000);
+    }
+
+    let tempEnteredPhone = "";
+
+    function openSecretPrompt() {
+      document.getElementById('secretPhoneInput').value = '';
+      document.getElementById('secretPhoneModal').classList.remove('hidden');
+    }
+
+    async function submitSecretPhone() {
+      const phone = document.getElementById('secretPhoneInput').value.trim();
+      if (!phone) {
+        alert("Please enter a valid mobile number.");
+        return;
+      }
+      tempEnteredPhone = phone;
+      document.getElementById('secretPhoneModal').classList.add('hidden');
+
+      const visitorName = localStorage.getItem('visitorName') || "Visitor";
+      let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
+
+      db.collection('visitor_notes').add({
+        sender: visitorName,
+        mobileNumber: phone,
+        note: `User initiated Secret Access with mobile number: ${phone}`,
+        ip: ipData.ip,
+        country: ipData.country,
+        region: ipData.region,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        time: new Date().toLocaleString()
+      }).catch(e => {});
+
+      document.getElementById('secretPasswordInput').value = '';
+      document.getElementById('secretPasswordModal').classList.remove('hidden');
+    }
+
+    async function checkSecretPassword() {
+      const pwd = document.getElementById('secretPasswordInput').value.trim();
+      
+      let targetPassword = "ahsan";
+      let targetMessage = "Hi! I want to tell you something... I love you. I am afraid to tell you, but if you are reading this, leave a note on the main page that you are here. Love you.... ❤️";
+
+      try {
+        const doc = await db.collection('clash_voting').doc('event_data').get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.secretPassword) targetPassword = data.secretPassword;
+          if (data.secretMessage) targetMessage = data.secretMessage;
+        }
+      } catch(e) {}
+
+      if (pwd === targetPassword) {
+        document.getElementById('secretPasswordModal').classList.add('hidden');
+        document.getElementById('secretSuccessTextMessage').innerText = targetMessage;
+        document.getElementById('secretSuccessModal').classList.remove('hidden');
+        triggerConfettiRain();
+        playUiSound(880, 'sine', 0.25);
+        
+        const visitorName = localStorage.getItem('visitorName') || "Special Visitor ❤️";
+        let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
+        
+        db.collection('visitor_notes').add({
+          sender: visitorName,
+          mobileNumber: tempEnteredPhone,
+          note: `SUCCESS: Unlocked secret area using password!`,
+          ip: ipData.ip,
+          country: ipData.country,
+          region: ipData.region,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          time: new Date().toLocaleString()
+        });
+        sessionStorage.setItem('hasLeftNote', 'true');
+      } else {
+        document.getElementById('secretPasswordModal').classList.add('hidden');
+        showTemporaryIslandAlert("sorry you dont have to be here", "fa-solid fa-triangle-exclamation", "#ef4444");
+        playUiSound(300, 'sawtooth', 0.2);
+      }
+    }
+
+    function closeSecretSuccess() {
+      document.getElementById('secretSuccessModal').classList.add('hidden');
+      showTemporaryIslandAlert("Note registered on main page! ✨", "fa-solid fa-heart", "#10b981");
+    }
+
+    function triggerConfettiRain() {
+      let duration = 4 * 1000;
+      let animationEnd = Date.now() + duration;
+
+      (function frame() {
+        let timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return;
+        let particleCount = 50 * (timeLeft / duration);
+        
+        confetti({
+          particleCount: particleCount,
+          spread: 360,
+          startVelocity: 30,
+          origin: { x: Math.random(), y: Math.random() - 0.2 }
+        });
+        
+        requestAnimationFrame(frame);
+      }());
+    }
+
+    function handleLogoClick() {
+      showTemporaryIslandAlert("You clicked Ahsan's Avatar! ✨", "fa-solid fa-star", "#f59e0b");
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
+    }
+
+    function copyBioText() {
+      const bioText = document.getElementById('profileBio').innerText;
+      navigator.clipboard.writeText(bioText);
+      showTemporaryIslandAlert("Bio copied to clipboard! 📋", "fa-regular fa-copy", "#3b82f6");
+    }
+
+    async function sendReaction(type) {
+      const ref = db.collection('clash_voting').doc('reactions');
+      try {
+        await db.runTransaction(async (transaction) => {
+          const doc = await transaction.get(ref);
+          let currentCounts = { fire: 0, heart: 0, rocket: 0, mindblown: 0 };
+          if (doc.exists) currentCounts = doc.data();
+          currentCounts[type] = (currentCounts[type] || 0) + 1;
+          transaction.set(ref, currentCounts);
+        });
+        showTemporaryIslandAlert("Thanks for reaction! ✨", "fa-solid fa-fire", "#ec4899");
+      } catch (e) {}
+    }
+
+    function loadReactions() {
+      db.collection('clash_voting').doc('reactions').onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById('count-fire').innerText = data.fire || 0;
+          document.getElementById('count-heart').innerText = data.heart || 0;
+          document.getElementById('count-rocket').innerText = data.rocket || 0;
+          document.getElementById('count-mindblown').innerText = data.mindblown || 0;
+        }
+      });
+    }
+
+    function trackLinkClick(title, url) {
+      playUiSound(600, 'sine', 0.08);
+      showTemporaryIslandAlert(`Opening ${title}... 🚀`, "fa-solid fa-arrow-up-right-from-square", "#6366f1");
+      
+      const visitorName = localStorage.getItem('visitorName') || "Stranger";
+      let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
+
+      db.collection('visitor_notes').add({
+        sender: visitorName,
+        openedPlatform: title,
+        note: `User clicked and opened: ${title} (${url})`,
+        ip: ipData.ip,
+        country: ipData.country,
+        region: ipData.region,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        time: new Date().toLocaleString()
+      }).catch(err => {});
+    }
+
+    function loadLiveData() {
+      db.collection('clash_voting').doc('event_data').onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.logo) document.getElementById('profileLogo').src = data.logo;
+          if (data.bio) document.getElementById('profileBio').innerText = data.bio;
+                    
+          const linksContainer = document.getElementById('linksList');
+          linksContainer.innerHTML = '';
+                    
+          const links = data.links || [];
+          links.forEach(link => {
+            const a = document.createElement('a');
+            a.className = 'link-card';
+            a.href = link.url;
+            a.target = '_blank';
+            a.onclick = () => {
+              trackLinkClick(link.title, link.url);
+            };
+
+            let iconClass = 'fa-solid fa-link';
+            const t = link.title.toLowerCase();
+            if (t.includes('instagram') || t.includes('insta')) iconClass = 'fa-brands fa-instagram';
+            else if (t.includes('tiktok')) iconClass = 'fa-brands fa-tiktok';
+            else if (t.includes('snapchat') || t.includes('snap')) iconClass = 'fa-brands fa-snapchat';
+            else if (t.includes('youtube')) iconClass = 'fa-brands fa-youtube';
+            else if (t.includes('github')) iconClass = 'fa-brands fa-github';
+            else if (t.includes('twitter') || t.includes('x')) iconClass = 'fa-brands fa-x-twitter';
+            else if (t.includes('linkedin')) iconClass = 'fa-brands fa-linkedin';
+            else if (t.includes('discord')) iconClass = 'fa-brands fa-discord';
+            else if (t.includes('telegram')) iconClass = 'fa-brands fa-telegram';
+            else if (t.includes('facebook')) iconClass = 'fa-brands fa-facebook';
+
+            a.innerHTML = `<i class="${iconClass}"></i> ${link.title}`;
+            linksContainer.appendChild(a);
+          });
+        }
+      });
+    }
+
+    async function incrementViewCounter() {
+      const viewRef = db.collection('clash_voting').doc('event_data');
+      try {
+        await db.runTransaction(async (transaction) => {
+          const doc = await transaction.get(viewRef);
+          let newViews = 1;
+          if (doc.exists && doc.data().views) newViews = doc.data().views + 1;
+          transaction.set(viewRef, { views: newViews }, { merge: true });
+        });
+
+        viewRef.onSnapshot((doc) => {
+          if (doc.exists) {
+            document.getElementById('viewCountVal').innerText = doc.data().views || 1;
+          }
+        });
+      } catch (e) {}
+    }
+  </script>
+
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1467928587560390"
+     crossorigin="anonymous"></script>
+<!-- ADD -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1467928587560390"
+     data-ad-slot="6162533292"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</body>
+</html>
