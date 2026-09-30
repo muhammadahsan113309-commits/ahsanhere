@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --panel-bg: #131b2e;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --danger: #ef4444;
+      --success: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .admin-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      padding: 36px 30px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .admin-card::-webkit-scrollbar { width: 6px; }
+    .admin-card::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+
+    h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .preview-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      background: rgba(9, 13, 22, 0.6);
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .preview-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+
+    input[type="text"], input[type="file"], input[type="password"], textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(9, 13, 22, 0.8);
+      color: #fff;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 70px; }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+    .btn:hover { background: var(--accent-hover); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3); }
+
+    .btn-status-open {
+      background: var(--success) !important;
+    }
+    .btn-status-open:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .btn-status-closed {
+      background: var(--danger) !important;
+    }
+    .btn-status-closed:hover {
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3) !important;
+    }
+
+    .link-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .link-row input { margin-bottom: 0; }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    .btn-delete:hover { background: var(--danger); color: #fff; }
+
+    .btn-text-danger {
+      background: transparent;
+      color: var(--danger);
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .btn-text-danger:hover { background: rgba(239, 68, 68, 0.15); }
+
+    .add-box {
+      background: rgba(9, 13, 22, 0.4);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed var(--border);
+      margin-top: 12px;
+    }
+
+    .logs-box {
+      background: rgba(9, 13, 22, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 0.82rem;
+    }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+    .log-item span { color: var(--text-main); font-weight: 600; }
+    .log-content { flex-grow: 1; }
+
+    .platform-badge {
+      display: inline-block;
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-top: 24px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      transition: all 0.3s;
+    }
+    .back-link:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+
+    .hidden { display: none !important; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      z-index: 1100;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div id="authBox" class="admin-card">
+    <h2><i class="fa-solid fa-lock" style="color: var(--accent);"></i> Admin Access</h2>
+    <p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-bottom: 20px;">Enter security password to manage dashboard</p>
+    <input type="password" id="adminPassword" placeholder="Enter Password..." style="margin-bottom: 16px;" onkeydown="if(event.key === 'Enter') verifyPassword()" />
+    <button class="btn" onclick="verifyPassword()">
+      <i class="fa-solid fa-right-to-bracket"></i> Login
+    </button>
+  </div>
+
+  <!-- Admin Controls Screen -->
+  <div id="adminControls" class="admin-card hidden">
+    <h2>Admin Dashboard</h2>
+
+   
+
+    <!-- Profile Customization -->
+    <div class="section-title"><i class="fa-solid fa-id-card"></i> Bio / Subtitle Message</div>
+    <textarea id="bioInput" placeholder="Write a short sub-headline..." style="margin-bottom: 10px;"></textarea>
+    <button class="btn" onclick="saveBioToFirestore()" style="margin-bottom: 16px;">
+      <i class="fa-solid fa-floppy-disk"></i> Update Bio
+    </button>
+
+    <!-- Secret Area Management -->
+    <div class="section-title"><i class="fa-solid fa-key"></i> Secret Area Configuration</div>
+    <input type="text" id="secretPasswordInputAdmin" placeholder="Secret Password (e.g. ahsan)" style="margin-bottom: 8px;" />
+    <textarea id="secretMessageInputAdmin" placeholder="Secret Romantic Text Message (e.g. I love you...)" style="margin-bottom: 10px;"></textarea>
+    <button class="btn" onclick="saveSecretConfigToFirestore()" style="margin-bottom: 16px;">
+      <i class="fa-solid fa-floppy-disk"></i> Update Secret Settings
+    </button>
+
+    <!-- Logo Upload Section -->
+    <div class="section-title"><i class="fa-solid fa-image"></i> Profile Logo Management</div>
+    <div class="preview-container">
+      <img id="logoPreview" class="preview-img" src="https://via.placeholder.com/110" alt="Preview" />
+      <div>
+        <p style="font-size: 0.85rem; color: var(--text-main); font-weight: 600;">Active Logo</p>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Updates instantly live</p>
+      </div>
+    </div>
+    <input type="file" id="logoFileInput" accept="image/*" style="margin-bottom: 12px;" onchange="previewFile()" />
+    <button class="btn" onclick="uploadLogoToFirestore()">
+      <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Sync Logo
+    </button>
+
+    <!-- Links Management Section -->
+    <div class="section-title"><i class="fa-solid fa-list-check"></i> Manage Hub Links</div>
+    <div id="linksList" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">Loading links...</div>
+
+    <div class="add-box">
+      <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 10px; color: var(--text-muted);">Add New Link</div>
+      <input type="text" id="newTitle" placeholder="Title (e.g. YouTube)" style="margin-bottom: 8px;" />
+      <input type="text" id="newUrl" placeholder="URL (https://...)" style="margin-bottom: 12px;" />
+      <button class="btn" onclick="addNewLink()">
+        <i class="fa-solid fa-plus"></i> Add Link
+      </button>
+    </div>
+
+    <!-- Live Prank & Visitor Logs View -->
+    <div class="section-title">
+      <span><i class="fa-solid fa-shield-halved"></i> Recent Prank Log Attempts</span>
+      <button class="btn-text-danger" onclick="clearAllLogs()"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+    </div>
+    <div id="prankLogsList" class="logs-box">Loading logs...</div>
+
+    <!-- Visitor Secret Notes Wall Section -->
+    <div class="section-title">
+      <span><i class="fa-solid fa-envelope-open-text"></i> Visitor Secret Notes & Platform Clicks</span>
+      <button class="btn-text-danger" onclick="clearAllNotes()"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+    </div>
+    <div id="adminNotesList" class="logs-box" style="display: flex; flex-direction: column; gap: 8px;">
+      Loading notes...
+    </div>
+
+    <a class="back-link" href="index.html">
+      <i class="fa-solid fa-globe"></i> View Live Profile Hub
+    </a>
+  </div>
+
+  <div id="toast" class="toast">Changes saved!</div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyACVwVXRB_5nTFozs0PV22zd6wSpZuBVqE",
+      authDomain: "reakweb.firebaseapp.com",
+      databaseURL: "https://reakweb-default-rtdb.firebaseio.com",
+      projectId: "reakweb",
+      storageBucket: "reakweb.firebasestorage.app",
+      messagingSenderId: "228639861953",
+      appId: "1:228639861953:web:2941663bb550703b61b840"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    const _p = "YWhzYW4wMzE1";
+    let currentLinks = [];
+    let isWebsiteClosed = false;
+    let visitorLocationData = { ip: "Unavailable", country: "Unknown", region: "Unknown" };
+
+    function getDetailedDeviceDetails() {
+      const ua = navigator.userAgent;
+      let deviceName = "Unknown Device";
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(ua);
+      if (/Windows NT 10.0/i.test(ua)) deviceName = "Windows PC";
+      else if (/Macintosh/i.test(ua) && !isMobile) deviceName = "Mac";
+      else if (/iPhone/i.test(ua)) deviceName = "iPhone";
+      else if (/Android/i.test(ua)) deviceName = "Android Phone";
+      return { deviceName, deviceType: isMobile ? "Mobile Phone" : "Desktop PC" };
+    }
+
+    async function fetchVisitorInfo() {
+      try {
+        const res = await fetch("https://ipwho.is/");
+        const data = await res.json();
+        if (data && data.success) {
+          visitorLocationData.ip = data.ip || "Unavailable";
+          visitorLocationData.country = data.country || "Unknown";
+          visitorLocationData.region = data.region || "Unknown";
+        }
+      } catch (e) {}
+    }
+    fetchVisitorInfo();
+
+    function showToast(msg = "Changes saved!") {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    async function verifyPassword() {
+      const inputPass = document.getElementById('adminPassword').value;
+
+      if (inputPass === atob(_p)) {
+        document.getElementById('authBox').classList.add('hidden');
+        document.getElementById('adminControls').classList.remove('hidden');
+        loadFirestoreData();
+        loadPrankLogs();
+        loadAdminNotes();
+      } else {
+        if (visitorLocationData.ip === "Unavailable") {
+          await fetchVisitorInfo();
+        }
+
+        const username = localStorage.getItem('visitorName') || "stranger";
+        const ip = visitorLocationData.ip;
+        const country = visitorLocationData.country;
+        const region = visitorLocationData.region;
+        const device = getDetailedDeviceDetails();
+
+        try {
+          await db.collection('prank_logs').add({
+            username: username,
+            attemptedPassword: inputPass,
+            ip: ip,
+            country: country,
+            region: region,
+            deviceName: device.deviceName,
+            deviceType: device.deviceType,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            time: new Date().toLocaleString()
+          });
+        } catch (err) {}
+
+        alert(`Are you trying to guess password? I know who you are... ${username}, do u live in ${country}, ${region} and your IP is ${ip}? 🤫 Are you using a ${device.deviceName}...`);
+      }
+    }
+
+    function loadFirestoreData() {
+      db.collection('clash_voting').doc('event_data').onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.logo) document.getElementById('logoPreview').src = data.logo;
+          if (data.bio) document.getElementById('bioInput').value = data.bio;
+          if (data.secretPassword) document.getElementById('secretPasswordInputAdmin').value = data.secretPassword;
+          if (data.secretMessage) document.getElementById('secretMessageInputAdmin').value = data.secretMessage;
+          
+          isWebsiteClosed = !!data.isClosed;
+          updateStatusButtonUI();
+
+          if (data.links && Array.isArray(data.links)) {
+            currentLinks = data.links;
+          } else {
+            currentLinks = [
+              { title: "Instagram", url: "https://instagram.com" },
+              { title: "TikTok", url: "https://tiktok.com" },
+              { title: "Snapchat", url: "https://snapchat.com" }
+            ];
+          }
+          renderAdminLinks();
+        }
+      });
+    }
+
+    function updateStatusButtonUI() {
+      const btn = document.getElementById('toggleSiteBtn');
+      if (!btn) return;
+      if (isWebsiteClosed) {
+        btn.className = "btn btn-status-closed";
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Website is CLOSED (Click to Open)';
+      } else {
+        btn.className = "btn btn-status-open";
+        btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Website is OPEN (Click to Close)';
+      }
+    }
+
+    function toggleSiteStatus() {
+      const nextState = !isWebsiteClosed;
+      db.collection('clash_voting').doc('event_data').set({
+        isClosed: nextState
+      }, { merge: true }).then(() => {
+        showToast(nextState ? "Website is now CLOSED!" : "Website is now OPEN!");
+      }).catch((e) => {
+        alert("Failed to update website status.");
+      });
+    }
+
+    function saveSecretConfigToFirestore() {
+      const pass = document.getElementById('secretPasswordInputAdmin').value.trim() || 'ahsan';
+      const msg = document.getElementById('secretMessageInputAdmin').value.trim() || 'I love you.... ❤️';
+
+      db.collection('clash_voting').doc('event_data').set({
+        secretPassword: pass,
+        secretMessage: msg
+      }, { merge: true }).then(() => {
+        showToast("Secret settings updated!");
+      });
+    }
+
+    function loadPrankLogs() {
+      db.collection('prank_logs').onSnapshot((snapshot) => {
+        const container = document.getElementById('prankLogsList');
+        container.innerHTML = '';
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="log-item" style="justify-content: center;">No wrong password attempts logged yet.</div>';
+          return;
+        }
+
+        let logs = [];
+        snapshot.forEach(doc => {
+          logs.push({ id: doc.id, ...doc.data() });
+        });
+
+        logs.sort((a, b) => {
+          const tA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+          const tB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+          return tB - tA;
+        });
+
+        logs.forEach(d => {
+          const div = document.createElement('div');
+          div.className = 'log-item';
+          div.innerHTML = `
+            <div class="log-content"><span>${d.username || 'Stranger'}</span> tried <b>"${d.attemptedPassword || ''}"</b> from ${d.country || 'Unknown'} (${d.ip || '0.0.0.0'}) at ${d.time || 'just now'}</div>
+            <button class="btn-delete" style="width: 32px; height: 32px;" onclick="deleteSingleLog('${d.id}')" title="Delete Log">
+              <i class="fa-solid fa-trash" style="font-size: 0.75rem;"></i>
+            </button>
+          `;
+          container.appendChild(div);
+        });
+      }, (err) => {
+        document.getElementById('prankLogsList').innerHTML = '<div class="log-item" style="justify-content: center; color: var(--danger);">Failed to sync prank logs.</div>';
+      });
+    }
+
+    function loadAdminNotes() {
+      db.collection('visitor_notes').onSnapshot((snapshot) => {
+        const container = document.getElementById('adminNotesList');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<div class="log-item" style="justify-content: center;">No secret notes or opened link logs received yet.</div>';
+          return;
+        }
+
+        let notes = [];
+        snapshot.forEach(doc => {
+          notes.push({ id: doc.id, ...doc.data() });
+        });
+
+        notes.sort((a, b) => {
+          const tA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+          const tB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+          return tB - tA;
+        });
+
+        notes.forEach(d => {
+          const div = document.createElement('div');
+          div.className = 'log-item';
+          div.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;";
+          
+          let platformTag = d.openedPlatform ? `<span class="platform-badge"><i class="fa-solid fa-arrow-up-right-from-square"></i> Opened: ${d.openedPlatform}</span>` : '';
+          let phoneTag = d.mobileNumber ? `<span class="platform-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;"><i class="fa-solid fa-phone"></i> Mobile: ${d.mobileNumber}</span>` : '';
+
+          div.innerHTML = `
+            <div style="display: flex; width: 100%; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted);">
+              <span><strong>From:</strong> ${d.sender || 'Stranger'} ${platformTag} ${phoneTag} (${d.time || 'Just now'})</span>
+              <button class="btn-delete" style="width: 24px; height: 24px;" onclick="deleteSingleNote('${d.id}')" title="Delete Note">
+                <i class="fa-solid fa-trash" style="font-size: 0.65rem;"></i>
+              </button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">
+              IP: <b>${d.ip || 'Unknown'}</b> | Location: <b>${d.country || 'Unknown'}, ${d.region || 'Unknown'}</b>
+            </div>
+            <div style="color: var(--text-main); font-size: 0.9rem; word-break: break-word; margin-top: 4px;">${d.note || 'No text content'}</div>
+          `;
+          container.appendChild(div);
+        });
+      }, (err) => {
+        document.getElementById('adminNotesList').innerHTML = '<div class="log-item" style="justify-content: center; color: var(--danger);">Failed to sync visitor notes.</div>';
+      });
+    }
+
+    async function deleteSingleNote(docId) {
+      try {
+        await db.collection('visitor_notes').doc(docId).delete();
+        showToast("Note deleted!");
+      } catch (e) {
+        alert("Failed to delete note.");
+      }
+    }
+
+    async function clearAllNotes() {
+      if (!confirm("Are you sure you want to clear all secret notes and click logs?")) return;
+      try {
+        const snapshot = await db.collection('visitor_notes').get();
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        showToast("All secret notes cleared!");
+      } catch (e) {
+        alert("Failed to clear notes.");
+      }
+    }
+
+    async function deleteSingleLog(docId) {
+      try {
+        await db.collection('prank_logs').doc(docId).delete();
+        showToast("Log deleted!");
+      } catch (e) {
+        alert("Failed to delete log.");
+      }
+    }
+
+    async function clearAllLogs() {
+      if (!confirm("Are you sure you want to clear all prank logs?")) return;
+      try {
+        const snapshot = await db.collection('prank_logs').get();
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        showToast("All logs cleared!");
+      } catch (e) {
+        alert("Failed to clear logs.");
+      }
+    }
+
+    function saveBioToFirestore() {
+      const bioText = document.getElementById('bioInput').value.trim();
+      db.collection('clash_voting').doc('event_data').set({
+        bio: bioText
+      }, { merge: true }).then(() => {
+        showToast("Bio updated successfully!");
+      });
+    }
+
+    function previewFile() {
+      const file = document.getElementById('logoFileInput').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('logoPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function uploadLogoToFirestore() {
+      const file = document.getElementById('logoFileInput').files[0];
+      if (!file) {
+        alert("Please select an image file first.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        db.collection('clash_voting').doc('event_data').set({
+          logo: e.target.result
+        }, { merge: true }).then(() => {
+          showToast("Logo published live!");
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderAdminLinks() {
+      const container = document.getElementById('linksList');
+      container.innerHTML = '';
+      if (currentLinks.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No links added yet.</p>';
+        return;
+      }
+      currentLinks.forEach((link, index) => {
+        const div = document.createElement('div');
+        div.className = 'link-row';
+        div.innerHTML = `
+          <input type="text" value="${link.title}" placeholder="Title" onchange="updateLink(${index}, 'title', this.value)" />
+          <input type="text" value="${link.url}" placeholder="URL" onchange="updateLink(${index}, 'url', this.value)" />
+          <button class="btn-delete" onclick="deleteLink(${index})" title="Delete Link">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateLink(index, key, value) {
+      currentLinks[index][key] = value;
+      saveLinksToFirestore();
+    }
+
+    function deleteLink(index) {
+      currentLinks.splice(index, 1);
+      saveLinksToFirestore("Link deleted!");
+    }
+
+    function addNewLink() {
+      const title = document.getElementById('newTitle').value.trim();
+      const url = document.getElementById('newUrl').value.trim();
+      if (title && url) {
+        currentLinks.push({ title, url });
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newUrl').value = '';
+        saveLinksToFirestore("New link added!");
+      } else {
+        alert("Please enter both title and URL.");
+      }
+    }
+
+    function saveLinksToFirestore(msg = "Links saved live!") {
+      db.collection('clash_voting').doc('event_data').set({
+        links: currentLinks
+      }, { merge: true }).then(() => {
+        showToast(msg);
+      });
+    }
+  </script>
+</body>
+</html>
