@@ -519,6 +519,17 @@
       color: #fff !important;
     }
 
+    /* AdSense Responsive Wrapper */
+    .adsense-container {
+      width: 100%;
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px;
+      overflow: hidden;
+    }
+
     .admin-link {
       display: inline-flex;
       align-items: center;
@@ -672,6 +683,20 @@
       <button class="action-btn" onclick="promptNameChange(); playUiSound();">
         <i class="fa-solid fa-user-pen"></i> Edit
       </button>
+    </div>
+
+    <!-- Google AdSense Container -->
+    <div class="adsense-container">
+      <!-- Display ads -->
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-2812268727869246"
+           data-ad-slot="5952883375"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
     </div>
 
     <a class="admin-link" href="adminpanel.html">
@@ -1010,339 +1035,16 @@
       isVibeActive = !isVibeActive;
       const btn = document.getElementById('vibeToggleBtn');
       const icon = document.getElementById('vibeIcon');
-      const island = document.getElementById('dynamicIsland');
-      
-      if (isVibeActive) {
-        btn.classList.add('active-vibe');
-        icon.className = 'fa-solid fa-volume-high';
-        btn.innerHTML = `<i class="fa-solid fa-volume-high" id="vibeIcon"></i> Vibe: On`;
-        island.classList.add('playing-beat');
-        playUiSound(650, 'triangle', 0.2);
-        showTemporaryIslandAlert("Audio Vibe Activated ✨", "fa-solid fa-music", "#10b981");
-      } else {
-        btn.classList.remove('active-vibe');
-        icon.className = 'fa-solid fa-volume-xmark';
-        btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="vibeIcon"></i> Vibe: Off`;
-        island.classList.remove('playing-beat');
-        showTemporaryIslandAlert("Audio Vibe Muted 🔇", "fa-solid fa-volume-xmark", "#94a3b8");
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedName = localStorage.getItem('visitorName');
-      if (savedName) {
-        document.getElementById('nameModal').classList.add('hidden');
-        updateGreeting(savedName);
-      }
-      loadLiveData();
-      incrementViewCounter();
-      loadReactions();
-      startIslandTicker();
-
-      window.addEventListener('pointerdown', () => {
-        playUiSound(540, 'sine', 0.12);
-      }, { once: true });
-    });
-
-    let islandIndex = 0;
-    let islandTimer = null;
-    let isIslandExpanded = false;
-
-    function getIslandMessages() {
-      const name = localStorage.getItem('visitorName') || "Visitor";
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      let messages = [
-        { text: `Hi ${name}! Welcome 👋`, icon: "fa-solid fa-face-smile", color: "#6366f1" },
-        { text: `Current time: ${timeStr}`, icon: "fa-solid fa-clock", color: "#3b82f6" },
-        { text: `Thanks for your reaction! 🔥`, icon: "fa-solid fa-heart", color: "#ec4899" },
-        { text: `Share this hub with friends! 🚀`, icon: "fa-solid fa-share-nodes", color: "#f59e0b" },
-        { text: `Explore Ahsan's links below 👇`, icon: "fa-solid fa-compass", color: "#8b5cf6" }
-      ];
-
-      if (sessionStorage.getItem('hasLeftNote') === 'true') {
-        messages.splice(2, 0, { text: `Thanks for leaving a note! 📝`, icon: "fa-solid fa-envelope", color: "#10b981" });
-      }
-
-      return messages;
-    }
-
-    function updateIslandDisplay(msgObj) {
-      const textEl = document.getElementById('islandText');
-      textEl.style.opacity = 0;
-      setTimeout(() => {
-        textEl.innerText = msgObj.text;
-        textEl.style.opacity = 1;
-      }, 150);
-    }
-
-    function startIslandTicker() {
-      const messages = getIslandMessages();
-      if (islandIndex >= messages.length) islandIndex = 0;
-      updateIslandDisplay(messages[islandIndex]);
-      
-      if (islandTimer) clearInterval(islandTimer);
-      islandTimer = setInterval(() => {
-        if (!isIslandExpanded) {
-          const msgs = getIslandMessages();
-          islandIndex = (islandIndex + 1) % msgs.length;
-          updateIslandDisplay(msgs[islandIndex]);
+      if (btn && icon) {
+        if (isVibeActive) {
+          btn.classList.add('active-vibe');
+          btn.innerHTML = `<i class="fa-solid fa-volume-high" id="vibeIcon"></i> Vibe: On`;
+        } else {
+          btn.classList.remove('active-vibe');
+          btn.innerHTML = `<i class="fa-solid fa-volume-xmark" id="vibeIcon"></i> Vibe: Off`;
         }
-      }, 4500);
-    }
-
-    function toggleIslandExpansion() {
-      playUiSound(440, 'sine', 0.05);
-      const island = document.getElementById('dynamicIsland');
-      isIslandExpanded = !isIslandExpanded;
-      
-      if (isIslandExpanded) {
-        island.classList.add('expanded');
-        const msgs = getIslandMessages();
-        islandIndex = (islandIndex + 1) % msgs.length;
-        updateIslandDisplay(msgs[islandIndex]);
-      } else {
-        island.classList.remove('expanded');
       }
-    }
-
-    function showTemporaryIslandAlert(text, icon = "fa-solid fa-bell", color = "#6366f1") {
-      if (islandTimer) clearInterval(islandTimer);
-      isIslandExpanded = false;
-      document.getElementById('dynamicIsland').classList.remove('expanded');
-      
-      updateIslandDisplay({ text, icon, color });
-      setTimeout(() => {
-        startIslandTicker();
-      }, 4000);
-    }
-
-    let tempEnteredPhone = "";
-
-    function openSecretPrompt() {
-      document.getElementById('secretPhoneInput').value = '';
-      document.getElementById('secretPhoneModal').classList.remove('hidden');
-    }
-
-    async function submitSecretPhone() {
-      const phone = document.getElementById('secretPhoneInput').value.trim();
-      if (!phone) {
-        alert("Please enter a valid mobile number.");
-        return;
-      }
-      tempEnteredPhone = phone;
-      document.getElementById('secretPhoneModal').classList.add('hidden');
-
-      const visitorName = localStorage.getItem('visitorName') || "Visitor";
-      let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
-
-      db.collection('visitor_notes').add({
-        sender: visitorName,
-        mobileNumber: phone,
-        note: `User initiated Secret Access with mobile number: ${phone}`,
-        ip: ipData.ip,
-        country: ipData.country,
-        region: ipData.region,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        time: new Date().toLocaleString()
-      }).catch(e => {});
-
-      document.getElementById('secretPasswordInput').value = '';
-      document.getElementById('secretPasswordModal').classList.remove('hidden');
-    }
-
-    async function checkSecretPassword() {
-      const pwd = document.getElementById('secretPasswordInput').value.trim();
-      
-      let targetPassword = "ahsan";
-      let targetMessage = "Hi! I want to tell you something... I love you. I am afraid to tell you, but if you are reading this, leave a note on the main page that you are here. Love you.... ❤️";
-
-      try {
-        const doc = await db.collection('clash_voting').doc('event_data').get();
-        if (doc.exists) {
-          const data = doc.data();
-          if (data.secretPassword) targetPassword = data.secretPassword;
-          if (data.secretMessage) targetMessage = data.secretMessage;
-        }
-      } catch(e) {}
-
-      if (pwd === targetPassword) {
-        document.getElementById('secretPasswordModal').classList.add('hidden');
-        document.getElementById('secretSuccessTextMessage').innerText = targetMessage;
-        document.getElementById('secretSuccessModal').classList.remove('hidden');
-        triggerConfettiRain();
-        playUiSound(880, 'sine', 0.25);
-        
-        const visitorName = localStorage.getItem('visitorName') || "Special Visitor ❤️";
-        let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
-        
-        db.collection('visitor_notes').add({
-          sender: visitorName,
-          mobileNumber: tempEnteredPhone,
-          note: `SUCCESS: Unlocked secret area using password!`,
-          ip: ipData.ip,
-          country: ipData.country,
-          region: ipData.region,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          time: new Date().toLocaleString()
-        });
-        sessionStorage.setItem('hasLeftNote', 'true');
-      } else {
-        document.getElementById('secretPasswordModal').classList.add('hidden');
-        showTemporaryIslandAlert("sorry you dont have to be here", "fa-solid fa-triangle-exclamation", "#ef4444");
-        playUiSound(300, 'sawtooth', 0.2);
-      }
-    }
-
-    function closeSecretSuccess() {
-      document.getElementById('secretSuccessModal').classList.add('hidden');
-      showTemporaryIslandAlert("Note registered on main page! ✨", "fa-solid fa-heart", "#10b981");
-    }
-
-    function triggerConfettiRain() {
-      let duration = 4 * 1000;
-      let animationEnd = Date.now() + duration;
-
-      (function frame() {
-        let timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return;
-        let particleCount = 50 * (timeLeft / duration);
-        
-        confetti({
-          particleCount: particleCount,
-          spread: 360,
-          startVelocity: 30,
-          origin: { x: Math.random(), y: Math.random() - 0.2 }
-        });
-        
-        requestAnimationFrame(frame);
-      }());
-    }
-
-    function handleLogoClick() {
-      showTemporaryIslandAlert("You clicked Ahsan's Avatar! ✨", "fa-solid fa-star", "#f59e0b");
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
-    }
-
-    function copyBioText() {
-      const bioText = document.getElementById('profileBio').innerText;
-      navigator.clipboard.writeText(bioText);
-      showTemporaryIslandAlert("Bio copied to clipboard! 📋", "fa-regular fa-copy", "#3b82f6");
-    }
-
-    async function sendReaction(type) {
-      const ref = db.collection('clash_voting').doc('reactions');
-      try {
-        await db.runTransaction(async (transaction) => {
-          const doc = await transaction.get(ref);
-          let currentCounts = { fire: 0, heart: 0, rocket: 0, mindblown: 0 };
-          if (doc.exists) currentCounts = doc.data();
-          currentCounts[type] = (currentCounts[type] || 0) + 1;
-          transaction.set(ref, currentCounts);
-        });
-        showTemporaryIslandAlert("Thanks for reaction! ✨", "fa-solid fa-fire", "#ec4899");
-      } catch (e) {}
-    }
-
-    function loadReactions() {
-      db.collection('clash_voting').doc('reactions').onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          document.getElementById('count-fire').innerText = data.fire || 0;
-          document.getElementById('count-heart').innerText = data.heart || 0;
-          document.getElementById('count-rocket').innerText = data.rocket || 0;
-          document.getElementById('count-mindblown').innerText = data.mindblown || 0;
-        }
-      });
-    }
-
-    function trackLinkClick(title, url) {
-      playUiSound(600, 'sine', 0.08);
-      showTemporaryIslandAlert(`Opening ${title}... 🚀`, "fa-solid fa-arrow-up-right-from-square", "#6366f1");
-      
-      const visitorName = localStorage.getItem('visitorName') || "Stranger";
-      let ipData = window.visitorIpData || { ip: "Unavailable", country: "Unknown", region: "Unknown" };
-
-      db.collection('visitor_notes').add({
-        sender: visitorName,
-        openedPlatform: title,
-        note: `User clicked and opened: ${title} (${url})`,
-        ip: ipData.ip,
-        country: ipData.country,
-        region: ipData.region,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        time: new Date().toLocaleString()
-      }).catch(err => {});
-    }
-
-    function loadLiveData() {
-      db.collection('clash_voting').doc('event_data').onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          if (data.logo) document.getElementById('profileLogo').src = data.logo;
-          if (data.bio) document.getElementById('profileBio').innerText = data.bio;
-                    
-          const linksContainer = document.getElementById('linksList');
-          linksContainer.innerHTML = '';
-                    
-          const links = data.links || [];
-          links.forEach(link => {
-            const a = document.createElement('a');
-            a.className = 'link-card';
-            a.href = link.url;
-            a.target = '_blank';
-            a.onclick = () => {
-              trackLinkClick(link.title, link.url);
-            };
-
-            let iconClass = 'fa-solid fa-link';
-            const t = link.title.toLowerCase();
-            if (t.includes('instagram') || t.includes('insta')) iconClass = 'fa-brands fa-instagram';
-            else if (t.includes('tiktok')) iconClass = 'fa-brands fa-tiktok';
-            else if (t.includes('snapchat') || t.includes('snap')) iconClass = 'fa-brands fa-snapchat';
-            else if (t.includes('youtube')) iconClass = 'fa-brands fa-youtube';
-            else if (t.includes('github')) iconClass = 'fa-brands fa-github';
-            else if (t.includes('twitter') || t.includes('x')) iconClass = 'fa-brands fa-x-twitter';
-            else if (t.includes('linkedin')) iconClass = 'fa-brands fa-linkedin';
-            else if (t.includes('discord')) iconClass = 'fa-brands fa-discord';
-            else if (t.includes('telegram')) iconClass = 'fa-brands fa-telegram';
-            else if (t.includes('facebook')) iconClass = 'fa-brands fa-facebook';
-
-            a.innerHTML = `<i class="${iconClass}"></i> ${link.title}`;
-            linksContainer.appendChild(a);
-          });
-        }
-      });
-    }
-
-    async function incrementViewCounter() {
-      const viewRef = db.collection('clash_voting').doc('event_data');
-      try {
-        await db.runTransaction(async (transaction) => {
-          const doc = await transaction.get(viewRef);
-          let newViews = 1;
-          if (doc.exists && doc.data().views) newViews = doc.data().views + 1;
-          transaction.set(viewRef, { views: newViews }, { merge: true });
-        });
-
-        viewRef.onSnapshot((doc) => {
-          if (doc.exists) {
-            document.getElementById('viewCountVal').innerText = doc.data().views || 1;
-          }
-        });
-      } catch (e) {}
     }
   </script>
-
-<!-- ADD -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-1467928587560390"
-     data-ad-slot="6162533292"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
 </body>
 </html>
